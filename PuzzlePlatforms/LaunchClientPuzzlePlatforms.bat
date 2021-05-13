@@ -1,1 +1,1 @@
-"C:\Program Files\Epic Games\UE_4.26\Engine\Binaries\Win64\UE4Editor.exe" "C:\Users\Guillaume\Documents\_workspace\UnrealMultiplayer\PuzzlePlatforms\PuzzlePlatforms.uproject" 192.168.1.96  -game -log
+"C:\Program Files\Epic Games\UE_4.26\Engine\Binaries\Win64\UE4Editor.exe" "C:\Users\Guillaume\Documents\_workspace\UnrealMultiplayer\PuzzlePlatforms\PuzzlePlatforms.uproject" -game -log
