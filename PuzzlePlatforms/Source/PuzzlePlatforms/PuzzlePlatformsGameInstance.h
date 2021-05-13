@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -23,4 +21,10 @@ public:
 
 	UFUNCTION(Exec)
 	void Join(const FString& Address);
+
+	UFUNCTION(BlueprintCallable)
+	void LoadMenu();
+
+private:
+	TSubclassOf<class UUserWidget> m_MenuClass;
 };
