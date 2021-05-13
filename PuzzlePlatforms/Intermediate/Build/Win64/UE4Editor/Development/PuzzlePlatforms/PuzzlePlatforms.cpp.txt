@@ -1,2 +1,0 @@
-C:\Users\Guillaume\Documents\_workspace\UnrealMultiplayer\PuzzlePlatforms\Intermediate\Build\Win64\UE4Editor\Development\PuzzlePlatforms\Definitions.PuzzlePlatforms.h
-C:\Users\Guillaume\Documents\_workspace\UnrealMultiplayer\PuzzlePlatforms\Source\PuzzlePlatforms\PuzzlePlatforms.h
