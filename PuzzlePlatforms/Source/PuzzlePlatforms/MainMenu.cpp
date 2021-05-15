@@ -1,8 +1,20 @@
 #include "MainMenu.h"
 
+#include "UObject/ConstructorHelpers.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/EditableTextBox.h"
+#include "Components/TextBlock.h"
+#include "Components/CircularThrobber.h" 
+
+#include "ServerRow.h"
+
+UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer)
+{
+	ConstructorHelpers::FClassFinder<UUserWidget> ServerRowBPClass(TEXT("/Game/MenuSystem/WBP_ServerRow"));
+	if (!ensure(ServerRowBPClass.Class != nullptr)) return;
+	m_ServerRowClass = ServerRowBPClass.Class;
+}
 
 bool UMainMenu::Initialize()
 {
@@ -27,7 +39,6 @@ bool UMainMenu::Initialize()
 	return true;
 }
 
-
 void UMainMenu::HostServer()
 {
 	if (!ensure(m_MenuSwitcher != nullptr)) return;
@@ -39,6 +50,11 @@ void UMainMenu::JoinMenu()
 	if (!ensure(m_MenuSwitcher != nullptr)) return;
 	if (!ensure(m_JoinMenu != nullptr)) return;
 	m_MenuSwitcher->SetActiveWidget(m_JoinMenu);
+
+	if (m_MenuInterface != nullptr) {
+		m_MenuInterface->RefreshServerList();
+	}
+
 }
 
 void UMainMenu::CancelJoinMenu()
@@ -50,12 +66,35 @@ void UMainMenu::CancelJoinMenu()
 
 void UMainMenu::JoinServer()
 {
-	if (!ensure(m_MenuSwitcher != nullptr)) return;
-	if (!ensure(m_IPAddressText != nullptr)) return;
+	if (m_MenuInterface != nullptr && m_SelectedIndex.IsSet()) {
+		m_MenuInterface->Join(m_SelectedIndex.GetValue());
+	}
+}
 
-	const FString& IPAdress = m_IPAddressText->GetText().ToString();
+void UMainMenu::SelectIndex(uint32 Index)
+{
+	m_SelectedIndex = Index;
+}
 
-	m_MenuInterface->Join(IPAdress);
+void UMainMenu::SetServerList(TArray<FString> ServerNames)
+{
+	UWorld* World = this->GetWorld();
+	if (!ensure(World != nullptr)) return;
+
+	m_ServerList->ClearChildren();
+
+	uint32 i = 0;
+
+	for (const FString& ServerName : ServerNames) {
+		UServerRow* ServerRow = CreateWidget<UServerRow>(World, m_ServerRowClass);
+		if (!ensure(ServerRow != nullptr)) return;
+
+		ServerRow->m_ServerName->SetText(FText::FromString(ServerName));
+		ServerRow->Setup(this, i);
+		++i;
+
+		m_ServerList->AddChild(ServerRow);
+	}
 }
 
 void UMainMenu::Quit()
@@ -67,4 +106,10 @@ void UMainMenu::Quit()
 	if (!ensure(PlayerController != nullptr)) return;
 
 	PlayerController->ConsoleCommand("quit");
+}
+
+void UMainMenu::HideThrobber()
+{
+	if (!ensure(m_LoaderAnim != nullptr)) return;
+	m_LoaderAnim->SetVisibility(ESlateVisibility::Hidden);
 }

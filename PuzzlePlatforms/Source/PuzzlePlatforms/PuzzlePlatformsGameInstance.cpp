@@ -3,7 +3,6 @@
 #include "Engine/Engine.h" 
 #include "UObject/ConstructorHelpers.h"
 #include "Blueprint/UserWidget.h"
-#include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
 
 #include "PlatformTrigger.h"
@@ -41,17 +40,7 @@ void UPuzzlePlatformsGameInstance::Init()
 		m_SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnCreateSessionComplete);
 		m_SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnDestroySessionComplete);
 		m_SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnFindSessionComplete);
-
-		m_SessionSearch = MakeShareable(new FOnlineSessionSearch());
-
-		if (m_SessionSearch.IsValid()) {
-
-			m_SessionSearch->bIsLanQuery = true;
-			//m_SessionSearch->QuerySettings will be usefull for steam, etc.
-
-			UE_LOG(LogTemp, Warning, TEXT("searching session"));
-			m_SessionInterface->FindSessions(0, m_SessionSearch.ToSharedRef());
-		}
+		m_SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnJoinSessionComplete);
 	}
 }
 
@@ -59,10 +48,31 @@ void UPuzzlePlatformsGameInstance::OnFindSessionComplete(bool Success)
 {
 	UE_LOG(LogTemp, Warning, TEXT("finished session search"));
 
-	if (Success && m_SessionSearch.IsValid()) {
+	if (Success && m_SessionSearch.IsValid() && m_Menu != nullptr) {
+
+		TArray<FString> ServerNames;
+
 		for (const FOnlineSessionSearchResult& SearchResult : m_SessionSearch->SearchResults) {
 			UE_LOG(LogTemp, Warning, TEXT("Session found : %s"), *SearchResult.GetSessionIdStr());
+			ServerNames.Add(SearchResult.GetSessionIdStr());
 		}
+
+		m_Menu->SetServerList(ServerNames);
+		m_Menu->HideThrobber();
+	}
+}
+
+void UPuzzlePlatformsGameInstance::RefreshServerList()
+{
+	m_SessionSearch = MakeShareable(new FOnlineSessionSearch());
+
+	if (m_SessionSearch.IsValid()) {
+
+		m_SessionSearch->bIsLanQuery = true;
+		//m_SessionSearch->QuerySettings will be usefull for steam, etc.
+
+		UE_LOG(LogTemp, Warning, TEXT("searching session"));
+		m_SessionInterface->FindSessions(0, m_SessionSearch.ToSharedRef());
 	}
 }
 
@@ -124,10 +134,27 @@ void UPuzzlePlatformsGameInstance::CreateSession()
 	}
 }
 
-void UPuzzlePlatformsGameInstance::Join(const FString& Address)
+void UPuzzlePlatformsGameInstance::Join(uint32 Index)
 {
+	if (!m_SessionInterface.IsValid()) return;
+	if (!m_SessionSearch.IsValid()) return;
+
 	if (m_Menu != nullptr) {
 		m_Menu->Teardown();
+	}
+
+	m_SessionInterface->JoinSession(0, SESSION_NAME, m_SessionSearch->SearchResults[Index]);
+}
+
+void UPuzzlePlatformsGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (!m_SessionInterface.IsValid()) return;
+
+	FString Address;
+
+	if (!m_SessionInterface->GetResolvedConnectString(SessionName, Address)) {
+		UE_LOG(LogTemp, Warning, TEXT("Can't join session"));
+		return;
 	}
 
 	UEngine* Engine = GetEngine();
@@ -141,6 +168,7 @@ void UPuzzlePlatformsGameInstance::Join(const FString& Address)
 	if (!ensure(PlayerController != nullptr)) return;
 
 	PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+
 }
 
 void UPuzzlePlatformsGameInstance::LoadMenu()
