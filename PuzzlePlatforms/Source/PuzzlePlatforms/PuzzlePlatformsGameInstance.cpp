@@ -3,7 +3,8 @@
 #include "Engine/Engine.h" 
 #include "UObject/ConstructorHelpers.h"
 #include "Blueprint/UserWidget.h"
-#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
 
 #include "PlatformTrigger.h"
 #include "MainMenu.h"
@@ -23,23 +24,38 @@ UPuzzlePlatformsGameInstance::UPuzzlePlatformsGameInstance(const FObjectInitiali
 void UPuzzlePlatformsGameInstance::Init()
 {
 	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+
 	if (!ensure(OnlineSubsystem != nullptr)) {
 		UE_LOG(LogTemp, Warning, TEXT("unable to load subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString());
 		return;
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("subsystem %s loaded"), *OnlineSubsystem->GetSubsystemName().ToString());
-	IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
-
-	if (SessionInterface.IsValid()) {
-		UE_LOG(LogTemp, Warning, TEXT("found session interface"), *OnlineSubsystem->GetSubsystemName().ToString());
+	
+	m_SessionInterface = OnlineSubsystem->GetSessionInterface();
+	
+	if (m_SessionInterface.IsValid()) {
+		m_SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnCreateSessionComplete);
 	}
 }
 
 void UPuzzlePlatformsGameInstance::Host()
 {
-	if (m_Menu != nullptr)
-	{
+	if (m_SessionInterface.IsValid()) {
+		FOnlineSessionSettings SessionSettings;
+		m_SessionInterface->CreateSession(0, TEXT("PuzzlePlatformsSession"), SessionSettings);
+	}
+}
+
+void UPuzzlePlatformsGameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
+{
+
+	if (!Success) {
+		UE_LOG(LogTemp, Warning, TEXT("Unable to create a session"));
+		return;
+	}
+
+	if (m_Menu != nullptr) {
 		m_Menu->Teardown();
 	}
 
@@ -58,8 +74,7 @@ void UPuzzlePlatformsGameInstance::Host()
 
 void UPuzzlePlatformsGameInstance::Join(const FString& Address)
 {
-	if (m_Menu != nullptr)
-	{
+	if (m_Menu != nullptr) {
 		m_Menu->Teardown();
 	}
 
