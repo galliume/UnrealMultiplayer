@@ -68,8 +68,9 @@ void UPuzzlePlatformsGameInstance::RefreshServerList()
 
 	if (m_SessionSearch.IsValid()) {
 
-		m_SessionSearch->bIsLanQuery = true;
-		//m_SessionSearch->QuerySettings will be usefull for steam, etc.
+		//m_SessionSearch->bIsLanQuery = true;
+		m_SessionSearch->MaxSearchResults = 1000;
+		m_SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 		UE_LOG(LogTemp, Warning, TEXT("searching session"));
 		m_SessionInterface->FindSessions(0, m_SessionSearch.ToSharedRef());
@@ -126,9 +127,10 @@ void UPuzzlePlatformsGameInstance::CreateSession()
 	if (m_SessionInterface.IsValid()) {
 		
 		FOnlineSessionSettings SessionSettings;
-		SessionSettings.bIsLANMatch = true;
+		SessionSettings.bIsLANMatch = false;
 		SessionSettings.NumPublicConnections = 2;
 		SessionSettings.bShouldAdvertise = true; //make it visible to find session
+		SessionSettings.bUsesPresence = true; //enable Lobby
 
 		m_SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings);
 	}
