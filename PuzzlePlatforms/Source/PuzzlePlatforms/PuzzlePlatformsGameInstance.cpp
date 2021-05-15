@@ -10,6 +10,8 @@
 #include "MainMenu.h"
 #include "MenuWidget.h"
 
+const static FName SESSION_NAME = TEXT("PuzzlePlatformsSession");
+
 UPuzzlePlatformsGameInstance::UPuzzlePlatformsGameInstance(const FObjectInitializer& ObjectInitializer)
 {
 	ConstructorHelpers::FClassFinder<UUserWidget> MainMenuClass(TEXT("/Game/MenuSystem/WBP_MainMenu"));
@@ -36,20 +38,26 @@ void UPuzzlePlatformsGameInstance::Init()
 	
 	if (m_SessionInterface.IsValid()) {
 		m_SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnCreateSessionComplete);
+		m_SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPuzzlePlatformsGameInstance::OnDestroySessionComplete);
 	}
 }
 
 void UPuzzlePlatformsGameInstance::Host()
 {
 	if (m_SessionInterface.IsValid()) {
-		FOnlineSessionSettings SessionSettings;
-		m_SessionInterface->CreateSession(0, TEXT("PuzzlePlatformsSession"), SessionSettings);
+
+		FNamedOnlineSession* ExistingSession = m_SessionInterface->GetNamedSession(SESSION_NAME);
+
+		if (ExistingSession != nullptr) {
+			m_SessionInterface->DestroySession(SESSION_NAME);
+		} else {
+			CreateSession();
+		}
 	}
 }
 
 void UPuzzlePlatformsGameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
 {
-
 	if (!Success) {
 		UE_LOG(LogTemp, Warning, TEXT("Unable to create a session"));
 		return;
@@ -70,6 +78,21 @@ void UPuzzlePlatformsGameInstance::OnCreateSessionComplete(FName SessionName, bo
 	if (!ensure(World != nullptr)) return;
 
 	World->ServerTravel("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
+}
+
+void UPuzzlePlatformsGameInstance::OnDestroySessionComplete(FName SessionName, bool Success)
+{
+	if (Success) {
+		CreateSession();
+	}
+}
+
+void UPuzzlePlatformsGameInstance::CreateSession()
+{
+	if (m_SessionInterface.IsValid()) {
+		FOnlineSessionSettings SessionSettings;
+		m_SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings);
+	}
 }
 
 void UPuzzlePlatformsGameInstance::Join(const FString& Address)
