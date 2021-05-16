@@ -88,7 +88,7 @@ void UMainMenu::UpdateServerRows()
 	}
 }
 
-void UMainMenu::SetServerList(TArray<FString> ServerNames)
+void UMainMenu::SetServerList(TArray<FServerData> ServerNames)
 {
 	UWorld* World = this->GetWorld();
 	if (!ensure(World != nullptr)) return;
@@ -97,11 +97,14 @@ void UMainMenu::SetServerList(TArray<FString> ServerNames)
 
 	uint32 i = 0;
 
-	for (const FString& ServerName : ServerNames) {
+	for (const FServerData& ServerData : ServerNames) {
 		UServerRow* ServerRow = CreateWidget<UServerRow>(World, m_ServerRowClass);
 		if (!ensure(ServerRow != nullptr)) return;
 
-		ServerRow->m_ServerName->SetText(FText::FromString(ServerName));
+		ServerRow->m_ServerName->SetText(FText::FromString(ServerData.m_Name));
+		ServerRow->m_HostName->SetText(FText::FromString(ServerData.m_HostUsername));
+		ServerRow->m_NbPlayers->SetText(FText::FromString(FString::Printf(TEXT("%d/%d"), ServerData.m_CurrentPlayers, ServerData.m_MaxPlayers)));
+
 		ServerRow->Setup(this, i);
 		++i;
 
