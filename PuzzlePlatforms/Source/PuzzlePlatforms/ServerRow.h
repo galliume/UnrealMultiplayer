@@ -20,6 +20,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* m_ServerName;
 
+	UPROPERTY(BlueprintReadOnly)
+	bool m_Selected = false;
+
 private:
 
 	UPROPERTY(meta = (BindWidget))

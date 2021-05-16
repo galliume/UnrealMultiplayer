@@ -70,4 +70,6 @@ private:
 	void Quit();
 
 	TOptional<uint32> m_SelectedIndex;
+
+	void UpdateServerRows();
 };

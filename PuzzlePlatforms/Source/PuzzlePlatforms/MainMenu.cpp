@@ -74,6 +74,18 @@ void UMainMenu::JoinServer()
 void UMainMenu::SelectIndex(uint32 Index)
 {
 	m_SelectedIndex = Index;
+	UpdateServerRows();
+}
+
+void UMainMenu::UpdateServerRows()
+{
+	for (int i = 0; i < m_ServerList->GetChildrenCount(); i++) {
+		UServerRow* ServerRow = Cast<UServerRow>(m_ServerList->GetChildAt(i));
+
+		if (ServerRow != nullptr) {
+			ServerRow->m_Selected = (m_SelectedIndex.IsSet() && m_SelectedIndex.GetValue() == i);
+		}
+	}
 }
 
 void UMainMenu::SetServerList(TArray<FString> ServerNames)
