@@ -9,6 +9,8 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 
+#include "Runtime/Engine/Classes/GameFramework/CharacterMovementComponent.h"
+
 //////////////////////////////////////////////////////////////////////////
 // APuzzlePlatformsCharacter
 
@@ -54,8 +56,11 @@ void APuzzlePlatformsCharacter::SetupPlayerInputComponent(class UInputComponent*
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &APuzzlePlatformsCharacter::DoubleJump);
+	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &APuzzlePlatformsCharacter::Sprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &APuzzlePlatformsCharacter::Walk);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &APuzzlePlatformsCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &APuzzlePlatformsCharacter::MoveRight);
@@ -137,4 +142,30 @@ void APuzzlePlatformsCharacter::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+void APuzzlePlatformsCharacter::DoubleJump()
+{
+	if (m_DoubleJumperCounter <= 1) {
+
+		ACharacter::LaunchCharacter(FVector(0, 0, m_JumpHeight), false, true);
+		m_DoubleJumperCounter++;
+	}
+}
+
+void APuzzlePlatformsCharacter::Landed(const FHitResult& Hit)
+{
+	m_DoubleJumperCounter = 0;
+}
+
+void APuzzlePlatformsCharacter::Sprint()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Sprint"));
+	GetCharacterMovement()->MaxWalkSpeed = m_SprintSpeed;
+}
+
+void APuzzlePlatformsCharacter::Walk()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Walk"));
+	GetCharacterMovement()->MaxWalkSpeed = m_WalkSpeed;
 }

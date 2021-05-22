@@ -63,10 +63,33 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
+	virtual void Landed(const FHitResult& Hit) override;
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	UPROPERTY(EditAnywhere)
+	int m_DoubleJumperCounter = 0;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float m_JumpHeight = 350.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float m_WalkSpeed = 150.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float m_SprintSpeed = 350.f;
+
+	UFUNCTION()
+	void DoubleJump();
+
+	UFUNCTION()
+	void Sprint();
+
+	UFUNCTION()
+	void Walk();
 };
 

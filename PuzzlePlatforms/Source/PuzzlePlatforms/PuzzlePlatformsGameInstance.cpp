@@ -61,6 +61,14 @@ void UPuzzlePlatformsGameInstance::OnFindSessionComplete(bool Success)
 			Data.m_CurrentPlayers = Data.m_MaxPlayers - SearchResult.Session.NumOpenPublicConnections;
 			Data.m_HostUsername = SearchResult.Session.OwningUserName;
 
+			FString DataSettings;
+			if (SearchResult.Session.SessionSettings.Get(TEXT("TEST"), DataSettings)) {
+				UE_LOG(LogTemp, Warning, TEXT("found in settings : %s"), *DataSettings);
+			}
+			else {
+				UE_LOG(LogTemp, Warning, TEXT("no Data found"));
+			}
+
 			ServerNames.Add(Data);
 		}
 
@@ -75,7 +83,7 @@ void UPuzzlePlatformsGameInstance::RefreshServerList()
 
 	if (m_SessionSearch.IsValid()) {
 
-		//m_SessionSearch->bIsLanQuery = true;
+		m_SessionSearch->bIsLanQuery = false;
 		m_SessionSearch->MaxSearchResults = 1000;
 		m_SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
@@ -113,6 +121,8 @@ void UPuzzlePlatformsGameInstance::OnCreateSessionComplete(FName SessionName, bo
 
 	if (!ensure(Engine != nullptr)) return;
 
+	UE_LOG(LogTemp, Warning, TEXT("Session created %s"), *SessionName.ToString());
+
 	Engine->AddOnScreenDebugMessage(0, 2, FColor::Green, TEXT("Hosting"));
 
 	UWorld* World = GetWorld();
@@ -138,6 +148,7 @@ void UPuzzlePlatformsGameInstance::CreateSession()
 		SessionSettings.NumPublicConnections = 2;
 		SessionSettings.bShouldAdvertise = true; //make it visible to find session
 		SessionSettings.bUsesPresence = true; //enable Lobby
+		SessionSettings.Set(TEXT("TEST"), FString("Hello"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 		m_SessionInterface->CreateSession(0, SESSION_NAME, SessionSettings);
 	}
